@@ -54,12 +54,32 @@ def check_url(url):
     return res
  
 
+def update_statistics(domain_data):
+    domain_data["stats"]={}
+    domain_data["stats"]["global"]={"errors":0,"redirects":0,"total":0}
+    for p in domain_data["protocols"]:
+        stats={"errors":0,"redirects":0,"total":0}
+        for r in domain_data["protocols"][p]["requests"]:
+            stats["total"]+=1
+            domain_data["stats"]["global"]["total"]+=1
+            if 'error' in r:
+                stats["errors"] +=1
+                domain_data["stats"]["global"]["errors"]+=1
+            if 'is_redirect' in r and r['is_redirect']:
+                stats["redirects"] +=1
+                domain_data["stats"]["global"]["redirects"]+=1
+        
+        domain_data["stats"][p]=stats
+    return domain_data
+
 def check_domain_http(domain):
     print("[*] {0}".format(domain))
     d_meta = {"domain":domain}
     d_meta["protocols"]= {}
-    d_meta["protocols"]["http"]=[check_url("http://{0}/".format(domain)), check_url("http://www.{0}/".format(domain))]
-    d_meta["protocols"]["https"]=[check_url("https://{0}/".format(domain)), check_url("https://www.{0}/".format(domain))]
+    d_meta["protocols"]["http"]={"requests":[check_url("http://{0}/".format(domain)), check_url("http://www.{0}/".format(domain))]}
+    d_meta["protocols"]["https"]={"requests":[check_url("https://{0}/".format(domain)), check_url("https://www.{0}/".format(domain))]}
+
+    d_meta = update_statistics(d_meta)
     return d_meta
 
 
